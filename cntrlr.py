@@ -40,4 +40,7 @@ class Keeper():
   def put_data(x):
     with self.con:
       cur = con.cursor()
+      cur.execute('create table if not exists ' + table_name + ' (id integer)')
       cur.execute("{0},{1}".format( time.time(), self.data))
+      self.con.commit()
+      self.con.close()
