@@ -11,7 +11,7 @@ class ctrl:
 class Controller():
  
   def __init__(self):
-    self.com = serial.Serial('/dev/ttyACM0', '9600', timeout = None)
+    self.com = serial.Serial('/dev/ttyACM0', '57600', timeout = None)
     time.sleep(2)
  
   def get_lux(self):
@@ -30,6 +30,8 @@ class Controller():
     self.com.write(ctrl.PRESSURE)  # command for compass data
     time.sleep(0.2)
     return  float(self.com.readline())
+
+
 
 class Keeper():
   def __init__(self, data):
