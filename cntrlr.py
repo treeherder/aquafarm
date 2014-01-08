@@ -15,19 +15,19 @@ class Controller():
     time.sleep(2)
  
   def get_lux(self):
-    self.com.write(ctrl.LUX) # command for ping data
+    self.com.write(ctrl.LUX) #get lux
     self.com.flush()
     time.sleep(0.2)
     return  float(self.com.readline())
  
  
   def get_temp(self):
-    self.com.write(ctrl.TEMP)  # command for compass data
+    self.com.write(ctrl.TEMP)  # get temp in degrees centigrade
     time.sleep(0.2)
     return  float(self.com.readline())
 
   def get_press(self):
-    self.com.write(ctrl.PRESSURE)  # command for compass data
+    self.com.write(ctrl.PRESSURE)  # get pressure information in millibars
     time.sleep(0.2)
     return  float(self.com.readline())
 
@@ -44,3 +44,4 @@ class Keeper():
       cur.execute("{0},{1}".format( time.time(), self.data))
       self.con.commit()
       self.con.close()
+
