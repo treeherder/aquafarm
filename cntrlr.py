@@ -37,9 +37,8 @@ class Keeper():
       self.put_data(cnt.poll_sensor(cmd), key)
 
 
-
 if __name__ == '__main__':
-    datamkr = Keeper()
-    datamkr.collect_data()
-
+  datamkr = Keeper()
+  datamkr.collect_data()
+  datamkr.con.close()
  
