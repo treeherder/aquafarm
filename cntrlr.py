@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+
 import time
 import serial
 import sqlite3 as sq
+
 #set some basic  flags
 light_flag = 1
+
 #set some command values
 ctrl = dict( LUX = "a", 
   TEMP = "b",
@@ -56,7 +60,7 @@ class Controller:
 cnt = Controller()
 class Keeper():
   def __init__(self):
-    self.con = sq.connect('/home/breddybest/projects/datalogger/sensors.db')
+    self.con = sq.connect('/home/breddybest/projects/datalogger/ctrl_vals.db')
   def put_data(self, data, sensor):
     with self.con:
       cur = self.con.cursor()
@@ -66,7 +70,7 @@ class Keeper():
       self.con.commit()
   def collect_data(self):
     for key, cmd in ctrl.items():
-      print cnt.poll_sensor(cmd), key
+      #print cnt.poll_sensor(cmd), key
       self.put_data(cnt.poll_sensor(cmd), key)
       cnt.light_cycle(14)	
 
@@ -74,4 +78,4 @@ if __name__ == '__main__':
   while True:
     datamkr = Keeper()
     datamkr.collect_data()
-  #datamkr.con.close()
+    datamkr.con.close()
