@@ -1,11 +1,18 @@
-from cntrlr import ctrl as ctrl
 import sqlite3
-con = sqlite3.connect('sensors.db')
-for table in ctrl:
+
+ctrl = dict( LUX = "a", 
+  TEMP = "b",
+  PRESSURE = "c",
+  PH = "d",
+  WATER_TEMP = "e"
+)
+con = sqlite3.connect('ctrl_vals.db')
+for row in ctrl:
   with con:
     cur = con.cursor()
-    cur.execute( "SELECT time,data from "+table+" order by time limit 1")
-    print table  
+    cur.execute( "SELECT time,data from "+table+" order by time desc limit 1")
+    # print the latest of each entry
+    print row  
   while 1:
       r = cur.fetchone()
       if r ==None:

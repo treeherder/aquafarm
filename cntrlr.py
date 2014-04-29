@@ -24,7 +24,7 @@ cmnds = dict(
 class Controller:
   def __init__(self ):
     self.sense_com = serial.Serial('/dev/ttyACM1', '57600', timeout = None)
-    self.pump_com = serial.Serial('/dev/ttyACM0', '9600', timeout = None)
+    self.pump_com = serial.Serial('/dev/ttyACM0', '115200', timeout = None)
     time.sleep(2)
   def poll_sensor(self, cmnd):  #use this method to get sensor data
     self.sense_com.write(cmnd) #send command byte
@@ -46,7 +46,7 @@ class Controller:
     off_start =  19 - off_cycle
     hr = int(interval[0][:2])
     # set the light to turn on at 7 pm
-    if  hr >=19 or hr <= off_start: #after 7 pm abd 9 am
+    if  hr >=19 or hr <= off_start: #after 7 pm and before 9 am
       if light_flag != 1: # first time only or there's something wrong
         self.ctrl_device(cmnds['LIGHT_ON'])	
         light_flag = 1  #flag that the light is on... 
@@ -56,8 +56,16 @@ class Controller:
        er.writelines("lights conflict with schedule, please check database {0}".format(time.time()))
     else:
       self.ctrl_device(cmnds['LIGHT_OFF'])   
-    
-cnt = Controller()
+    # set the light to turn on at 7 pm
+  def watering(self):
+    self.ctrl_device(cmnds['PUMP_ON'])
+    for x in xrange(1,7):
+      self.pump_com.write("{0}".format(x))
+      time.sleep(20)
+      self.pump_com.write("{0}".format(x))
+
+
+cnt = Controller()    
 class Keeper():
   def __init__(self):
     self.con = sq.connect('/home/breddybest/projects/datalogger/ctrl_vals.db')
@@ -72,10 +80,13 @@ class Keeper():
     for key, cmd in ctrl.items():
       #print cnt.poll_sensor(cmd), key
       self.put_data(cnt.poll_sensor(cmd), key)
-      cnt.light_cycle(14)	
-
-if __name__ == '__main__':
+      cnt.light_cycle(14)
+      cnt.watering()	
+def main():
   while True:
     datamkr = Keeper()
     datamkr.collect_data()
     datamkr.con.close()
+
+if __name__ == '__main__':
+  main()
