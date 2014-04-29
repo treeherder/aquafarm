@@ -6,7 +6,7 @@ import sqlite3 as sq
 
 #set some basic  flags
 light_flag = 1
-
+water_flag = 0
 #set some command values
 ctrl = dict( LUX = "a", 
   TEMP = "b",
@@ -17,8 +17,8 @@ ctrl = dict( LUX = "a",
 cmnds = dict(
   LIGHT_ON = "y",
   LIGHT_OFF = "z",
-  PUMP_ON = "g",
-  PUMP_OFF = "h"
+  PUMP_ON = "h",
+  PUMP_OFF = "g"
 )
 
 class Controller:
@@ -58,17 +58,19 @@ class Controller:
       self.ctrl_device(cmnds['LIGHT_OFF'])   
     # set the light to turn on at 7 pm
   def watering(self):
-    self.ctrl_device(cmnds['PUMP_ON'])
-    for x in xrange(1,7):
-      self.pump_com.write("{0}".format(x))
-      time.sleep(20)
-      self.pump_com.write("{0}".format(x))
-
-
+    if water_flag == 0:
+      if int(time.strftime("%M"))<= 20:
+        self.ctrl_device(cmnds['PUMP_ON'])
+        for x in xrange(1,8):
+          self.pump_com.write("{0}".format(x))
+          time.sleep(20)
+          self.pump_com.write("{0}".format(x))
+    else:
+        self.ctrl_device(cmnds['PUMP_OFF'])
 cnt = Controller()    
 class Keeper():
   def __init__(self):
-    self.con = sq.connect('/home/breddybest/projects/datalogger/ctrl_vals.db')
+    self.con = sq.connect('/home/breddybest/aquafarm/ctrl_vals.db')
   def put_data(self, data, sensor):
     with self.con:
       cur = self.con.cursor()
