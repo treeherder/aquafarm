@@ -263,17 +263,17 @@ void soil_sense() {
     pinMode(low_line,OUTPUT);
     digitalWrite(high_line,HIGH);
     digitalWrite(low_line ,LOW);
-    delay(2);
+    delay(10);
     //sense
     soilValues[i]=_soil_sense(i); //TODO make more consistent
     //drain
     digitalWrite(high_line,LOW);
     digitalWrite(low_line ,LOW);
-    delay(2);
+    delay(10);
     //high impedence
     pinMode(high_line,INPUT);
     pinMode(low_line,INPUT);
-    delay(2);
+    delay(10);
   }
 
   // printing the results array
