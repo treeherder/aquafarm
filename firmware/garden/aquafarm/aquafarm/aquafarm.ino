@@ -54,9 +54,11 @@ int ana0 = 0;
 int ana1 = 0;
 int ana2 = 0;
 /*the multiplexer selection pins*/
+/*
 int s0 = 3;
 int s1 = 4;
 int s2 = 5;
+*/
 
 void setup () {
   Serial.begin(57600);
@@ -255,7 +257,7 @@ void soil_sense() {
   //make it so it runs off the transistor
   //invert a transistor so it has enough current for everything.
   int i;
-  for (i = 0; i < number_of_pots; i++){
+  for (i = 0; i <= number_of_pots; i++){
     //charge
     pinMode(high_line,OUTPUT);
     pinMode(low_line,OUTPUT);
@@ -263,7 +265,7 @@ void soil_sense() {
     digitalWrite(low_line ,LOW);
     delay(2);
     //sense
-    soilValues[i]=_soil_sense(i);
+    soilValues[i]=_soil_sense(i); //TODO make more consistent
     //drain
     digitalWrite(high_line,LOW);
     digitalWrite(low_line ,LOW);
@@ -286,8 +288,7 @@ void soil_sense() {
 
 int _soil_sense(int pot){
   int s_s;
-  read_multi_anal_val();
-  s_s = read_multi_anal_val(pot - 1);//TODO at the moment we read everything then return, need to reduce overhead
+  s_s = read_multi_anal_val(pot);//TODO at the moment we read everything then return, need to reduce overhead
   return s_s;
 }
 
@@ -295,11 +296,11 @@ int read_multi_anal_val(int index){
   //reads both muxes 0 and 1
   readSensors(sensorOutput, 0);
   readSensors(sensorOutput, 1);
+  printResults(sensorOutput);
   return sensorOutput[index];
 }
 
 
-/*
 void printResults( int * arrayPointer) {
   //output will look like [0, 140, 24, 250, ... ,249 ]
   int i;
@@ -313,7 +314,6 @@ void printResults( int * arrayPointer) {
   Serial.print(*(arrayPointer + i));
   Serial.println("]");
 }
-*/
 
 
 void readSensors( int* arrayPointer, int enableBit) {
