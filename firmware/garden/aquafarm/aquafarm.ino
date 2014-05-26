@@ -1,9 +1,31 @@
-
-
 #include <Wire.h>
-#include <math.h> 
+#include <math.h>
 #include "MS561101BA.h"
 #include "OneWire.h"
+
+
+//analog mux macros
+#define s0 2
+#define s1 3
+#define s2 4
+
+#define e0 5
+#define e1 6
+
+#define AnalogPin A1
+
+#define arrayLength 16
+
+int r0=0;
+int r1=0;
+int r2=0;
+
+int count=0;
+
+int sensorOutput[arrayLength] = { 0 }; // all elements init to 0
+//end analog mux macros
+
+
 OneWire  ds(13);  // on pin 10 (a 4.7K resistor is necessary)
 MS561101BA baro = MS561101BA();
 byte addr[8] = {0x28, 0x5A, 0xF9, 0x36, 0x04, 0x00, 0x00, 0x75}; //black waterproof sensor
@@ -17,15 +39,27 @@ byte buff[2];
 
 
 void setup () {
-    Serial.begin(57600);
-    pinMode(light, OUTPUT);
-    pinMode(pump, OUTPUT);
+  Serial.begin(57600);
+  pinMode(light, OUTPUT);
+  pinMode(pump, OUTPUT);
 
-    Wire.begin();
-    // You'll have to check this on your breakout schematics
-    baro.init(MS561101BA_ADDR_CSB_LOW);
-    digitalWrite(light, LOW); //turn the light on 
+  Wire.begin();
+  // You'll have to check this on your breakout schematics
+  baro.init(MS561101BA_ADDR_CSB_LOW);
+  digitalWrite(light, LOW); //turn the light on
 
+  //begin analog mux pinmodes and initial values
+  pinMode(s0,OUTPUT);
+  pinMode(s1,OUTPUT);
+  pinMode(s2,OUTPUT);
+
+  pinMode(e0,OUTPUT);
+  pinMode(e1,OUTPUT);
+
+  digitalWrite(s0,LOW);
+  digitalWrite(s1,LOW);
+  digitalWrite(s2,LOW);
+  //end analog mux pinmodes and initial values
 }
 
 void loop()
@@ -33,54 +67,121 @@ void loop()
   if (Serial.available() > 0){
     int key = Serial.read();
     switch(key){
-    case 'a':
-      report_lux();
-      break;
-    case 'b':
-      temp();
-      break;
-    case 'c':
-      pres();
-      break;
-    case 'd':
-      water_ph();
-      break;
-    case 'e':
-      water_temp();
-      break;/*
-    case 'f':
-      dh_mtr();
-      break;*/
-    case'g':
-      pump_on();
-      break;
-    case 'h':
-      pump_off();
-      break; /*
-    case'i':
-      heat_on();
-      break;
-    case 'j'
-      heat_off();
-      break;    */
-    case 'y':
-      light_on();
-      break;
-    case 'z':
-      light_off();
-      break;
-    
-    default:
-     Serial.println();
-     break;
+      case 'a':
+        report_lux();
+        break;
+      case 'b':
+        temp();
+        break;
+      case 'c':
+        pres();
+        break;
+      case 'd':
+        water_ph();
+        break;
+      case 'e':
+        water_temp();
+        break;/*
+                 case 'f':
+                 dh_mtr();
+                 break;*/
+      case'g':
+        pump_on();
+        break;
+      case 'h':
+        pump_off();
+        break; /*
+                  case'i':
+                  heat_on();
+                  break;
+                  case 'j'
+                  heat_off();
+                  break;    */
+      case 'y':
+        light_on();
+        break;
+      case 'z':
+        light_off();
+        break;
+
+      default:
+        Serial.println();
+        break;
+    }
   }
-}  
-     
+
 }
 
+//begin extra functions for analog mux
+
+void printResults( int * arrayPointer) {
+//output will look like [0, 140, 24, 250, ... ,249 ]
+  int i;
+  Serial.print("[" );
+
+  for(i=0; i < (arrayLength - 1); i++ ){
+    Serial.print(*(arrayPointer + i));
+    Serial.print(",");
+  }
+
+  Serial.print(*(arrayPointer + i));
+  Serial.println("]");
+}
+
+void readSensors( int* arrayPointer, int enableBit) {
+  int sensorReading=0;
+
+
+  int i;
+  for ( i = 0; i <= 7 ; i++ ) {
+    r0=( i & 0x01);
+    r1=( ( i >>1) & 0x01);
+    r2=( ( i >>2) & 0x01);
+
+    /*
+      //prints out r0 r1 r2
+       Serial.print(" ");
+       Serial.print(r0);
+       Serial.print(" ");
+       Serial.print(r1);
+       Serial.print(" ");
+       Serial.println(r2);
+     */
+
+    digitalWrite(s0,r0);
+    digitalWrite(s1,r1);
+    digitalWrite(s2,r2);
+
+    if (enableBit == 0) {
+      digitalWrite(e1,1);
+      digitalWrite(e0,0);
+    } else {
+      digitalWrite(e0,1);
+      digitalWrite(e1,0);
+    }
+
+    if (enableBit == 1) {
+      sensorReading = *(arrayPointer + i + 8) = analogRead(AnalogPin);
+    } else {
+      sensorReading = *(arrayPointer + i) = analogRead(AnalogPin);
+    }
+
+    /*
+      //prints out individual readings
+      Serial.print("Reading on ");
+      Serial.print(i + enableBit*8);
+      Serial.print(" is ");
+      Serial.println(sensorReading);
+    */
+
+    delay(10);
+  }
+
+}
+//end extra functions for analog mux
 
 void report_lux()
-{
+
   int i;
   uint16_t val=0;
   BH1750_Init(BH1750address);
@@ -89,7 +190,7 @@ void report_lux()
   if(2==BH1750_Read(BH1750address))
   {
     val=((buff[0]<<8)|buff[1])/1.2;
-    Serial.println(val,DEC);     
+    Serial.println(val,DEC);
   }
   delay(150);
 }
@@ -105,7 +206,7 @@ int BH1750_Read(int address) //
     buff[i] = Wire.read();  // receive one byte
     i++;
   }
-  Wire.endTransmission();  
+  Wire.endTransmission();
   return i;
 }
 
@@ -115,7 +216,7 @@ int light_on(){ digitalWrite(light, LOW); }
 int light_off(){ digitalWrite(light, HIGH); }
 
 
-void BH1750_Init(int address) 
+void BH1750_Init(int address)
 {
   Wire.beginTransmission(address);
   Wire.write(0x10);//1lx reolution 120ms
@@ -128,7 +229,7 @@ int temp()
     temperature = baro.getTemperature(MS561101BA_OSR_4096);
   }
   Serial.println(temperature);
-  
+
   return 1;
 }
 int pres()
@@ -151,12 +252,12 @@ void water_temp() {
   ds.reset();
   ds.select(addr);
   ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-  
+
   delay(1000);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
-  
+
   present = ds.reset();
-  ds.select(addr);    
+  ds.select(addr);
   ds.write(0xBE);         // Read Scratchpad
 
   for ( i = 0; i < 9; i++) {           // we need 9 bytes
