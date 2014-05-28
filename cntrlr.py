@@ -58,15 +58,17 @@ class Controller:
       self.ctrl_device(cmnds['LIGHT_OFF'])   
     # set the light to turn on at 7 pm
   def watering(self):
-    if water_flag == 0:
-      if int(time.strftime("%M"))<= 20:
-        self.ctrl_device(cmnds['PUMP_ON'])
-        for x in xrange(1,8):
-          self.pump_com.write("{0}".format(x))
-          time.sleep(20)
-          self.pump_com.write("{0}".format(x))
+    if int(time.strftime("%M"))>= 50:
+      
+
+      self.ctrl_device(cmnds['PUMP_ON'])
+      for x in xrange(1,8):
+        self.pump_com.write("{0}".format(x))
+        time.sleep(20)
+        self.pump_com.write("{0}".format(x))
     else:
-        self.ctrl_device(cmnds['PUMP_OFF'])
+      self.ctrl_device(cmnds['PUMP_OFF'])
+      water_flag = 0
 cnt = Controller()    
 class Keeper():
   def __init__(self):
@@ -80,7 +82,7 @@ class Keeper():
       self.con.commit()
   def collect_data(self):
     for key, cmd in ctrl.items():
-      #print cnt.poll_sensor(cmd), key
+      print cnt.poll_sensor(cmd), key
       self.put_data(cnt.poll_sensor(cmd), key)
       cnt.light_cycle(14)
       cnt.watering()	
